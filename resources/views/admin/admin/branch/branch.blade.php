@@ -1,0 +1,233 @@
+@extends('admin.layout.layout')
+@section('content')
+<div class="page-breadcrumb">
+  <div class="row">
+    <div class="col-5 align-self-center">
+      <h4 class="page-title">Branch Listing</h4>
+      <div class="d-flex align-items-center">
+        <nav aria-label="breadcrumb">
+          <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{url('admin/dashboard')}}">Home</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Admins</li>
+          </ol>
+        </nav>
+      </div>
+    </div>
+    <div class="col-7 align-self-center">
+      <div class="d-flex no-block justify-content-end align-items-center">
+        <div class="m-r-10">
+          <div class="lastmonth"></div>
+        </div>
+        <button id="branch" class="btn btn-primary pull-right">ADD Branch</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="container-fluid">
+  <!-- ============================================================== -->
+  <!-- Start Page Content -->
+  <!-- ============================================================== -->
+  <!-- basic table -->
+  <div class="row">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-body">
+          <h4 class="card-title">Admins</h4>
+          <div class="col-md-12">
+           @if (session('success_msg'))
+            <div style="background-color: #28a745!important; " class="alert alert-success alert-dismissible">
+              <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+              {{ session('success_msg') }}
+            </div>
+            @endif
+        </div>
+          <div class="row m-t-40">
+            <!-- Column -->
+            <div class="col-md-6 col-lg-4 col-xlg-4">
+              <div class="card card-hover">
+                <div class="box bg-info text-center">
+                  <h1 class="font-light text-white">{{ totaladmin()}}</h1>
+                  <h6 class="text-white">Total Admin</h6>
+
+                </div>
+              </div>
+            </div>
+            <!-- Column -->
+            <div class="col-md-6 col-lg-4 col-xlg-4">
+              <div class="card card-hover">
+                <div class="box bg-primary text-center">
+                  <h1 class="font-light text-white">{{ totaladmin_active()}}</h1>
+                  <h6 class="text-white">Active Admin </h6>
+                </div>
+              </div>
+            </div>
+            <!-- Column -->
+            <div class="col-md-6 col-lg-4 col-xlg-4">
+              <div class="card card-hover">
+                <div class="box bg-success text-center">
+                  <h1 class="font-light text-white">{{ totaladmin_inactive()}}</h1>
+                  <h6 class="text-white">Inactive Admin</h6>
+                </div>
+              </div>
+            </div>
+            <!-- Column -->
+          </div>
+          <div class="table-responsive"> @if(Session()->has('success'))
+            <div class="alert alert-success alert-dismissible" role="alert">
+              <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span> </button>
+              <strong> {{Session::get('success') }}</strong> </div>
+            @elseif(Session()->has('failure'))
+            <div class="alert alert-danger alert-dismissible" role="alert">
+              <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span> </button>
+              <strong>{{Session::get('failure') }}</strong> </div>
+            @endif
+            <table id="export" class="table table-striped table-bordered">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Branch Name</th>
+                  <th>Location Name</th>
+                  <th>Edit</th>
+                  <th>Delete</th>
+                </tr>
+              </thead>
+              <tbody>
+              <?php $cnt = count($branches); if ($cnt>0) {?>
+              @foreach($branches as  $branch)
+              <tr>
+                <td>{{$branch->branch_id}}</td>
+                <td>{{$branch->branch_name}}</td>
+                <td>{{location_name($branch->location_id)}}</td>
+                <td> 
+                    <a  class="edit" data-toggle="tooltip" data-original-title="edit" onclick="editBranch({{$branch->branch_id}},'{{$branch->branch_name}}','{{$branch->location_id}}')">        edit
+                    </a>
+                  </td>
+                  <td> <a data-branch-id="{{ $branch->branch_id }}" id="btn-delete"  data-toggle="tooltip" data-original-title="delete" id="exampleWarningConfirm">
+                    Delete  
+                  </a></td>
+
+              </tr>
+              @endforeach
+              <?php } else { ?>
+              <tr>
+                 <p>Record not found.</p>
+              </tr>   
+              <?php } ?>
+              
+              </tbody>
+            </table>
+             <div align="center"> {{ $branches->links() }} </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!--Model start here-->
+<div class="modal fade" tabindex="-1" role="dialog" id="add_branch_model">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title" id="modal_title">Add Branch</h4>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span> </button>
+      </div>
+      <div class="modal-body">
+                 
+        <form action="" method="post" id="frm-branch" class="modeladdevent">
+
+           <div class="well"> <span>Branch:-</span>
+            <div class="input-group-prepend">
+                <span class="input-group-text" id="basic-addon14">
+                    <i class="icon-home"></i>
+                </span>
+             <input type="text" class="form-control " name="branch_name" id="branch_name" required>
+            
+            </div>
+             <b id="branch_error" style="color:#FF0000"></b>
+          </div>
+          <div class="well"> <span>Location:-</span>
+            <div class="input-group-prepend">
+                <span class="input-group-text" id="basic-addon14">
+                    <i class="fas fa-map-marker-alt"></i>
+                </span>
+                <select name="location_id" id="location_id"  class="form-control" required >
+                        <option value="" disabled selected>Select your Location</option>
+                          @foreach($locations as  $location)
+                                   <option value="{{$location->location_id }}">{{$location->location_name}}</option>
+                         @endforeach
+                  
+               </select>
+            </div>
+          </div>
+       
+        
+        <div class="modal-footer">
+          <button type="button" class="btn btn-rounded btn-block btn-outline-dark" data-dismiss="modal">Close</button>
+          <button type="submit" class="btn btn-rounded btn-block btn-outline-info btn-save">Save</button>
+        </div>
+        </form>
+      </div>
+      <!-- /.modal-content -->
+    </div>
+    <!-- /.modal-dialog -->
+  </div>
+  <!-- /.modal -->
+</div>
+<!--Model ends here-->
+
+<!--Model start here-->
+<div class="modal fade" tabindex="-1" role="dialog" id="edit_branch_model">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title" id="modal_title">Edit Branch</h4>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span> </button>
+      </div>
+      <div class="modal-body">
+                 
+        <form action="" method="" id="form_update_branch" class="modeladdevent">
+          <input type="hidden" name="branch_id" id="edit_branch_id" >
+          <div class="well"> <span>Branch Name:-</span>
+            <div class="input-group-prepend">
+                <span class="input-group-text" id="basic-addon14">
+                    <i class="icon-home"></i>
+                </span>
+             <input type="text" class="form-control " name="branch_name" id="edit_branch_name" required>
+             
+            </div>
+            <b id="edit_branch_error" style="color:#FF0000"></b>
+          </div>
+          <div class="well"> <span>Location:-</span>
+            <div class="input-group-prepend">
+                <span class="input-group-text" id="basic-addon14">
+                    <i class="fas fa-map-marker-alt"></i>
+                </span>
+                <select name="location_name" id="edit_location_name"  class="form-control" required >
+                        <option value="" disabled selected>Select your option</option>
+                         @foreach($locations as  $location)
+                                   <option value="{{$location->location_id}}">{{$location->location_name}}</option>
+                         @endforeach
+                  
+               </select>
+            </div>
+          </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-rounded btn-block btn-outline-dark" data-dismiss="modal">Close</button>
+          <button type="submit" class="btn btn-rounded btn-block btn-outline-info btn-update">Update</button>
+        </div>
+        </form>
+      </div>
+      <!-- /.modal-content -->
+    </div>
+    <!-- /.modal-dialog -->
+  </div>
+  <!-- /.modal -->
+</div>
+<!--Model ends here-->
+@endsection 
+
+@section('script')
+ @include('admin.admin.branch.js.branch-js')
+@endsection
